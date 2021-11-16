@@ -1,13 +1,22 @@
-from cohortextractor import StudyDefinition, patients, codelist, codelist_from_csv  # NOQA
+from cohortextractor import codelist, table
 
 
-study = StudyDefinition(
-    default_expectations={
-        "date": {"earliest": "1900-01-01", "latest": "today"},
-        "rate": "uniform",
-        "incidence": 0.5,
-    },
-    population=patients.registered_with_one_practice_between(
-        "2019-02-01", "2020-02-01"
-    ),
-)
+class Cohort:
+    population = table("patients").exists()
+    dob = table("patients").first_by("patient_id").get("date_of_birth")
+    age = table("patients").age_as_of("2020-01-01")
+    prescribed_med = (
+        table("prescriptions")
+        .filter("processing_date", between=["2020-01-01", "2020-01-31"])
+        .filter(
+            "prescribed_dmd_code", is_in=codelist(["0010", "0050"], system="dmd")
+        )
+        .exists()
+    )
+    admitted = (
+        table("hospital_admissions")
+        .filter("admission_date", between=["2020-01-01", "2020-01-31"])
+        .filter(primary_diagnosis="N05", episode_is_finished=True)
+        .filter("admission_method", between=[20, 29])
+        .exists()
+    )
