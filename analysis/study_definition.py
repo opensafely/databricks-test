@@ -1,4 +1,4 @@
-from cohortextractor import codelist, table
+from databuilder import codelist, table
 
 
 class Cohort:
